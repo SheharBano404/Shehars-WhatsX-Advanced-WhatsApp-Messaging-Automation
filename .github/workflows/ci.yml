@@ -51,6 +51,20 @@ jobs:
         uses: dawidd6/action-ansible-playbook@v2
         with:
           playbook: staging-playbook.yml
-          key: ${{ secrets.SSH_PRIVATE_KEY || '' }}
+          options: |
+            --connection=local
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production  # Yeh manual approval gate activate karega!
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Production Ansible Playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: production-playbook.yml
           options: |
             --connection=local
