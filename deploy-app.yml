@@ -1,0 +1,11 @@
+---
+- name: Build and Deploy Application via Ansible
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Ensure Docker image is built and container runs
+      docker_container:
+        name: whats-app-app
+        image: python:3.9-slim
+        state: started
+        restart_policy: always

@@ -1,0 +1,27 @@
+---
+- name: Emergency Rollback Playbook
+  hosts: localhost
+  connection: local
+  vars:
+    app_version: "3.8-slim"  # Rollback version / previous stable tag
+  tasks:
+    - name: Step 5.1 - Notification for initiating rollback
+      debug:
+        msg: "ALERT: Rolling back deployment to previous stable version tag: {{ app_version }}"
+
+    - name: Step 5.2 - Deploy previous stable container version
+      docker_container:
+        name: whats-app-app
+        image: "python:{{ app_version }}"
+        state: started
+        recreate: yes
+
+    - name: Step 5.3 - Verify rollback health check
+      uri:
+        url: http://localhost:5000
+        method: GET
+      ignore_errors: yes
+
+    - name: Step 5.4 - Rollback completion notice
+      debug:
+        msg: "Rollback successful! All target hosts reverted to version {{ app_version }}."

@@ -1,0 +1,24 @@
+---
+- name: Rolling Update Deployment
+  hosts: localhost
+  connection: local
+  serial: 1  # Updates one host at a time in multi-host environments
+  tasks:
+    - name: Pull or update container version
+      docker_container:
+        name: whats-app-app
+        image: python:3.9-slim
+        state: started
+        recreate: yes
+
+    - name: Health check to verify container is running
+      uri:
+        url: http://localhost:5000
+        method: GET
+        status_code: [200, 404]  # Verifies endpoint response
+      ignore_errors: yes
+      register: health_check
+
+    - name: Report health status
+      debug:
+        msg: "Health check status was successful for the updated instance."

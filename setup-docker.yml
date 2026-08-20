@@ -1,0 +1,20 @@
+---
+- name: Install and Configure Docker on Target Hosts
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install Docker package
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Add current user to docker group
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes

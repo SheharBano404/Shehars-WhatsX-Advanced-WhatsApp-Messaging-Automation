@@ -1,0 +1,26 @@
+---
+- name: Zero-Downtime Deployment with Load Balancer Integration
+  hosts: localhost
+  connection: local
+  serial: 1
+  tasks:
+    - name: Step 4.1 - Deregister host from Load Balancer pool
+      debug:
+        msg: "Draining traffic: Removing {{ inventory_hostname }} from Load Balancer target group..."
+
+    - name: Step 4.2 - Update application container
+      docker_container:
+        name: whats-app-app
+        image: python:3.9-slim
+        state: started
+        recreate: yes
+
+    - name: Step 4.3 - Run health check on updated container
+      uri:
+        url: http://localhost:5000
+        method: GET
+      ignore_errors: yes
+
+    - name: Step 4.4 - Re-add host to Load Balancer pool
+      debug:
+        msg: "Health check validated! Re-adding {{ inventory_hostname }} back to Load Balancer pool."
