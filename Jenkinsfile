@@ -34,8 +34,16 @@ pipeline {
         
         stage('Production Approval & Deployment') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    input message: "Approve deployment to Production?", ok: "Deploy to Prod"
+                script {
+                    // Scripted block ke andar input step behtareen tareeqay se UI par render hota hai
+                    def userInput = input(
+                        message: "Approve deployment to Production?",
+                        ok: "Deploy to Prod",
+                        parameters: [
+                            booleanParam(defaultValue: true, description: 'Confirm deployment', name: 'CONFIRM_PROD')
+                        ]
+                    )
+                    echo "User input received: ${userInput}"
                 }
                 echo "Approval received! Deploying to Production..."
                 sh 'echo "Production deployment completed successfully."'
@@ -48,7 +56,7 @@ pipeline {
             echo "Pipeline finished successfully across all stages!"
         }
         failure {
-            echo "Pipeline failed or timed out during approval!"
+            echo "Pipeline failed or aborted!"
         }
     }
 }
