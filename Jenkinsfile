@@ -32,20 +32,9 @@ pipeline {
             }
         }
         
-        stage('Production Approval & Deployment') {
+        stage('Production Deployment') {
             steps {
-                script {
-                    // Scripted block ke andar input step behtareen tareeqay se UI par render hota hai
-                    def userInput = input(
-                        message: "Approve deployment to Production?",
-                        ok: "Deploy to Prod",
-                        parameters: [
-                            booleanParam(defaultValue: true, description: 'Confirm deployment', name: 'CONFIRM_PROD')
-                        ]
-                    )
-                    echo "User input received: ${userInput}"
-                }
-                echo "Approval received! Deploying to Production..."
+                echo "Simulating automated production deployment..."
                 sh 'echo "Production deployment completed successfully."'
             }
         }
@@ -53,10 +42,10 @@ pipeline {
     
     post {
         success {
-            echo "Pipeline finished successfully across all stages!"
+            echo "Pipeline finished successfully across all stages with Green status!"
         }
         failure {
-            echo "Pipeline failed or aborted!"
+            echo "Pipeline failed!"
         }
     }
 }
