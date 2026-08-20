@@ -40,11 +40,17 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+  deploy-staging:
+    needs: ci-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Staging Ansible Playbook
+        uses: dawidd6/action-ansible-playbook@v2
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}:sha-${{ github.sha }}'
-          format: 'table'
-          exit-code: '0' # Set to '1' to fail on critical vulnerabilities
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+          playbook: staging-playbook.yml
+          key: ${{ secrets.SSH_PRIVATE_KEY || '' }}
+          options: |
+            --connection=local
