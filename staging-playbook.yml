@@ -11,11 +11,8 @@
         state: present
       become: yes
 
-    - name: Log in to GitHub Container Registry
-      docker_login:
-        registry: ghcr.io
-        username: "{{ lookup('env', 'GITHUB_ACTOR') }}"
-        password: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+    - name: Login to GHCR via shell command
+      shell: echo "{{ lookup('env', 'GITHUB_TOKEN') }}" | docker login ghcr.io -u "{{ lookup('env', 'GITHUB_ACTOR') }}" --password-stdin
 
     - name: Pull and start staging container
       docker_container:
