@@ -1,51 +1,56 @@
+@Library('my-shared-lib') _
+
 pipeline {
     agent any
     
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-                sh 'echo "Checked out code successfully from Git repository."'
+        stage('Parallel Quality & Security Checks') {
+            parallel {
+                stage('Lint Check') {
+                    steps {
+                        echo "Running code linter concurrently..."
+                        sh 'sleep 2 && echo "Linting passed."'
+                    }
+                }
+                stage('Unit Tests') {
+                    steps {
+                        echo "Running unit tests concurrently..."
+                        sh 'sleep 3 && echo "Unit tests passed successfully."'
+                    }
+                }
+                stage('Security Scan') {
+                    steps {
+                        echo "Running security scan concurrently..."
+                        sh 'sleep 2 && echo "Security scan clean."'
+                    }
+                }
             }
         }
         
-        stage('Install Dependencies') {
+        stage('Staging Deployment') {
             steps {
-                sh '''
-                    echo "Simulating dependency installation..."
-                    python3 --version || echo "Python version check skipped or not needed"
-                    echo "Dependencies installed successfully."
-                '''
+                echo "Deploying application to Staging environment..."
+                sh 'echo "Staging deploy successful."'
             }
         }
         
-        stage('Test') {
+        stage('Production Approval & Deployment') {
             steps {
-                sh '''
-                    echo "Running unit tests..."
-                    mkdir -p build-artifacts
-                    echo "All automated tests passed!" > build-artifacts/test-results.txt
-                '''
-            }
-        }
-        
-        stage('Package') {
-            steps {
-                sh '''
-                    echo "Packaging the application build artifacts..."
-                    tar -czf build-artifacts/app-package.tar.gz --exclude='build-artifacts' .
-                '''
+                timeout(time: 2, unit: 'MINUTES') {
+                    input message: "Approve deployment to Production?", ok: "Deploy to Prod"
+                }
+                echo "Approval received! Deploying to Production..."
+                sh 'echo "Production deployment completed successfully."'
             }
         }
     }
     
     post {
         success {
-            echo "Pipeline completed successfully! Archiving build artifacts..."
-            archiveArtifacts artifacts: 'build-artifacts/**/*', fingerprint: true
+            echo "Pipeline finished successfully across all stages!"
         }
         failure {
-            echo "Pipeline execution failed!"
+            echo "Pipeline failed or timed out during approval!"
         }
     }
 }
