@@ -4,6 +4,14 @@
   connection: local
   serial: 1
   tasks:
+    - name: Ensure pip and requests are installed for docker module
+      pip:
+        name: 
+          - requests
+          - docker
+        state: present
+      become: yes
+
     - name: Pull and update production container
       docker_container:
         name: whats-app-prod
