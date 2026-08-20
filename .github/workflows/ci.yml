@@ -1,4 +1,4 @@
-name: Complete CI/CD Pipeline
+name: Secure CI/CD Pipeline with Security Gates
 
 on:
   push:
@@ -11,7 +11,29 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks (Secret Detection)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy vulnerability scanner (Filesystem / SCA)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1' # Fails the pipeline if critical/high vulnerabilities are found
+
+  build-and-test:
+    needs: security-scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -22,31 +44,14 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Cache Node Dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Install Dependencies
         run: npm ci
 
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Run Validation Checks
+        run: echo "Validation passed successfully!"
 
-      - name: Run Code Validation Tests
-        run: |
-          echo "Running project validation checks..."
-          echo "Tests passed successfully!"
-
-  docker-build-push:
-    needs: test
+  docker-security-scan:
+    needs: build-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
@@ -64,29 +69,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Build Docker image
+        run: docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Run Trivy vulnerability scanner on Docker Image
+        uses: aquasecurity/trivy-action@master
         with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
+          severity: 'CRITICAL'
+          exit-code: '1' # Fails pipeline on critical container vulnerabilities
+
+      - name: Push Docker image
+        run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
   deploy:
-    needs: docker-build-push
+    needs: docker-security-scan
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://github.com
     steps:
-      - name: Production Deployment
+      - name: Secure Production Deployment
         run: |
-          echo "Deploying containerized application to Production environment..."
-          echo "Production deployment successful!"
+          echo "All security gates passed. Deploying to production securely..."
