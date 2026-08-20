@@ -12,12 +12,6 @@
         state: present
       become: yes
 
-    - name: Log in to GitHub Container Registry
-      docker_login:
-        registry: ghcr.io
-        username: "{{ lookup('env', 'GITHUB_ACTOR') }}"
-        password: "{{ lookup('env', 'GITHUB_TOKEN') }}"
-
     - name: Pull and update production container
       docker_container:
         name: whats-app-prod
