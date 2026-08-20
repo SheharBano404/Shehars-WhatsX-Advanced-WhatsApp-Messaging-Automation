@@ -1,0 +1,23 @@
+name: Registry Cleanup Workflow
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Runs every Sunday at midnight
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: Delete old container image tags
+        uses: snok/container-retention-policy@v3
+        with:
+          image-name: whats-app-app
+          cut-off: 30 days ago
+          account-type: user
+          keep-at-least: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
