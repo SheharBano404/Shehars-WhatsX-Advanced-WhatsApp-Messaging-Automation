@@ -1,0 +1,21 @@
+---
+- name: Deploy to Production Environment with Rolling Updates
+  hosts: localhost
+  connection: local
+  serial: 1
+  tasks:
+    - name: Pull and update production container
+      docker_container:
+        name: whats-app-prod
+        image: ghcr.io/sheharbano404/shehars-whats-x-advanced-whatsapp-messaging-automation:main
+        state: started
+        recreate: yes
+        ports:
+          - "5000:5000"
+
+    - name: Post-deployment health check
+      uri:
+        url: http://localhost:5000
+        method: GET
+        status_code: [200, 404]
+      register: health_check

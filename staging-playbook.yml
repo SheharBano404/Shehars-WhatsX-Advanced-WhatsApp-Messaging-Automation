@@ -1,0 +1,13 @@
+---
+- name: Deploy to Staging Environment
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Pull and start staging container
+      docker_container:
+        name: whats-app-staging
+        image: ghcr.io/sheharbano404/shehars-whats-x-advanced-whatsapp-messaging-automation:main
+        state: started
+        recreate: yes
+        ports:
+          - "5001:5000"
