@@ -1,7 +1,6 @@
-FROM node:18-alpine
+FROM python:3.9-slim
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
+COPY . /app
+RUN pip install --no-cache-dir -r requirements.txt || true
+EXPOSE 5000
+CMD ["python", "-m", "http.server", "5000"]
