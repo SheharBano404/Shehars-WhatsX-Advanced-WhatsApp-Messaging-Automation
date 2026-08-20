@@ -1,4 +1,4 @@
-name: Multi-Job CI/CD with Docker
+name: Complete CI/CD Pipeline
 
 on:
   push:
@@ -48,6 +48,14 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Cache Node Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install Dependencies
         run: npm ci
 
@@ -91,8 +99,11 @@ jobs:
     needs: docker-build-push
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://github.com
     steps:
-      - name: Simulated Deployment
+      - name: Production Deployment
         run: |
-          echo "Deploying containerized application to production..."
-          echo "Deployment successful!"
+          echo "Deploying containerized application to Production environment..."
+          echo "Production deployment successful!"
