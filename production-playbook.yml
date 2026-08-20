@@ -12,6 +12,12 @@
         state: present
       become: yes
 
+    - name: Login to GitHub Container Registry via Ansible
+      docker_login:
+        registry: ghcr.io
+        username: "{{ lookup('env', 'GITHUB_ACTOR') }}"
+        password: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+
     - name: Pull and update production container
       docker_container:
         name: whats-app-prod
